@@ -1,0 +1,62 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Chat</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    #chat { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
+    #message { width: 100%; }
+    #send { width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>Live Chat</h1>
+  <div id="chat"></div>
+  <input id="message" type="text" placeholder="Type your message..." />
+  <button id="send">Send</button>
+<script>
+  const chat = document.getElementById('chat');
+  const messageInput = document.getElementById('message');
+  const sendButton = document.getElementById('send');
+  
+  const ws = new WebSocket(`ws://${window.location.host}`);
+
+  ws.onmessage = (event) => {
+    // Check if the message data is a Blob
+    if (event.data instanceof Blob) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const message = document.createElement('div');
+        message.textContent = reader.result;
+        chat.appendChild(message);
+        chat.scrollTop = chat.scrollHeight; // Scroll to the bottom
+      };
+      reader.readAsText(event.data);
+    } else {
+      const message = document.createElement('div');
+      message.textContent = event.data;
+      chat.appendChild(message);
+      chat.scrollTop = chat.scrollHeight; // Scroll to the bottom
+    }
+  };
+
+  sendButton.onclick = () => {
+    const message = messageInput.value;
+    if (message) {
+      ws.send(message);
+      messageInput.value = '';
+    }
+  };
+
+  messageInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+      sendButton.click();
+    }
+  });
+</script>
+
+</body>
+</html>
